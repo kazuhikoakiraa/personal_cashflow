@@ -12,7 +12,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 const transactionSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid amount format"),
-  type: z.enum(["Income", "Expense"]),
+  type: z.enum(["INCOME", "EXPENSE"]),
   date: z.string().optional(),
   note: z.string().max(500, "Note must be 500 characters or less").optional(),
 });
@@ -22,7 +22,7 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 export function TransactionForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedType, setSelectedType] = useState<"Income" | "Expense">("Expense");
+  const [selectedType, setSelectedType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
 
   const {
     register,
@@ -32,7 +32,7 @@ export function TransactionForm() {
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      type: "Expense",
+      type: "EXPENSE",
       date: new Date().toISOString().split("T")[0],
     },
   });
@@ -103,10 +103,10 @@ export function TransactionForm() {
               Type *
             </label>
             <div className="grid grid-cols-2 gap-3 sm:flex sm:gap-4">
-              {['Income', 'Expense'].map((type) => {
+              {['INCOME', 'EXPENSE'].map((type) => {
                 const isSel = selectedType === type;
                 const stateClasses = isSel
-                  ? type === 'Income'
+                  ? type === 'INCOME'
                     ? 'border-emerald-500 bg-emerald-500/20 backdrop-blur'
                     : 'border-red-500 bg-red-500/20 backdrop-blur'
                   : 'border-white/50 bg-white/30 hover:bg-white/50 backdrop-blur';
@@ -119,7 +119,7 @@ export function TransactionForm() {
                       type="radio"
                       value={type}
                       checked={isSel}
-                      onChange={(e) => setSelectedType(e.target.value as "Income" | "Expense")}
+                      onChange={(e) => setSelectedType(e.target.value as "INCOME" | "EXPENSE")}
                       className="w-4 h-4"
                     />
                     <span>{type}</span>
