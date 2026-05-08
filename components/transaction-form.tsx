@@ -69,7 +69,6 @@ export function TransactionForm() {
       await createMutation.mutateAsync({
         ...data,
         type: selectedType,
-        date: data.date ? new Date(data.date) : new Date(),
       });
     } finally {
       setIsSubmitting(false);

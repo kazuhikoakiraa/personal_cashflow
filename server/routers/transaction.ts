@@ -13,7 +13,7 @@ export const transactionRouter = router({
         amount: z.string().regex(/^\d+(\.\d{1,2})?$/),
         type: z.enum(["INCOME", "EXPENSE"]),
         note: z.string().optional(),
-        date: z.date().optional(),
+        date: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -26,7 +26,7 @@ export const transactionRouter = router({
           amount: input.amount,
           type: input.type,
           note: input.note,
-          date: input.date || new Date(),
+          date: input.date ? new Date(input.date) : new Date(),
         },
         include: {
           category: true,
@@ -117,7 +117,7 @@ export const transactionRouter = router({
         amount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
         type: z.enum(["INCOME", "EXPENSE"]).optional(),
         note: z.string().optional(),
-        date: z.date().optional(),
+        date: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -144,7 +144,7 @@ export const transactionRouter = router({
           ...(input.amount && { amount: input.amount }),
           ...(input.type && { type: input.type }),
           ...(input.note !== undefined && { note: input.note }),
-          ...(input.date && { date: input.date }),
+          ...(input.date && { date: new Date(input.date) }),
         },
         include: {
           category: true,
