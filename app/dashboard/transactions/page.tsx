@@ -1,9 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { PlusCircle, ArrowRightLeft, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { PlusCircle, ArrowRightLeft, Trash2, TrendingUp, TrendingDown, PencilLine } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
+
+const paymentMethodLabels: Record<string, string> = {
+  CASH: "Cash",
+  DEBIT_CARD: "Debit Card",
+  CREDIT_CARD: "Credit Card",
+  BANK_TRANSFER: "Bank Transfer",
+  EWALLET: "E-Wallet",
+  QRIS: "QRIS",
+  OTHER: "Other",
+};
 
 export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<"INCOME" | "EXPENSE" | undefined>(undefined);
@@ -25,6 +35,20 @@ export default function TransactionsPage() {
 
   const formatDate = (date: string | Date) =>
     new Date(date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+
+  const formatExpenseDetails = (tx: (typeof transactions)[number]) => {
+    const parts = [
+      tx.merchant,
+      tx.paymentMethod ? paymentMethodLabels[tx.paymentMethod] ?? tx.paymentMethod : undefined,
+      tx.location,
+    ].filter(Boolean);
+
+    if (parts.length === 0) {
+      return tx.note ? tx.note : undefined;
+    }
+
+    return [tx.note, ...parts].filter(Boolean).join(" · ");
+  };
 
   return (
     <div className="space-y-5 sm:space-y-8">
@@ -97,13 +121,22 @@ export default function TransactionsPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{tx.category.name}</p>
-                    <p className="text-xs text-gray-400">{formatDate(tx.date)}{tx.note ? ` · ${tx.note}` : ""}</p>
+                    <p className="text-xs text-gray-400">
+                      {formatDate(tx.date)}{formatExpenseDetails(tx) ? ` · ${formatExpenseDetails(tx)}` : ""}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`font-bold text-sm ${tx.type === "INCOME" ? "text-emerald-600" : "text-red-500"}`}>
                     {tx.type === "INCOME" ? "+" : "-"}{formatIDR(tx.amount)}
                   </span>
+                  <Link
+                    href={`/dashboard/transactions/${tx.id}/edit`}
+                    className="text-gray-300 hover:text-gray-600 transition-colors"
+                    aria-label={`Edit transaction ${tx.category.name}`}
+                  >
+                    <PencilLine size={16} />
+                  </Link>
                   <button
                     onClick={() => deleteMutation.mutate(tx.id)}
                     className="text-gray-300 hover:text-red-400 transition-colors"

@@ -30,6 +30,19 @@ type DashboardTransaction = {
   type: "INCOME" | "EXPENSE";
   date: string;
   note?: string;
+  merchant?: string;
+  paymentMethod?: string;
+  location?: string;
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  CASH: "Cash",
+  DEBIT_CARD: "Debit Card",
+  CREDIT_CARD: "Credit Card",
+  BANK_TRANSFER: "Bank Transfer",
+  EWALLET: "E-Wallet",
+  QRIS: "QRIS",
+  OTHER: "Other",
 };
 
 type DashboardData = {
@@ -77,6 +90,14 @@ function StatCard({
 function TransactionRow({ transaction }: { transaction: DashboardTransaction }) {
   const isIncome = transaction.type === "INCOME";
   const Icon = isIncome ? ArrowUpRight : ArrowDownRight;
+  const details = [
+    transaction.note,
+    transaction.merchant,
+    transaction.paymentMethod ? paymentMethodLabels[transaction.paymentMethod] ?? transaction.paymentMethod : undefined,
+    transaction.location,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="flex items-center justify-between border-b border-white/50 py-4 last:border-0">
@@ -86,7 +107,7 @@ function TransactionRow({ transaction }: { transaction: DashboardTransaction }) 
         </div>
         <div>
           <p className="font-medium text-gray-900">{transaction.category}</p>
-          <p className="text-xs text-gray-500">{transaction.note || transaction.date}</p>
+          <p className="text-xs text-gray-500">{details || transaction.date}</p>
         </div>
       </div>
       <p className={`font-semibold ${isIncome ? "text-emerald-600" : "text-rose-600"}`}>

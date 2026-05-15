@@ -2,6 +2,22 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 import { assertCategoryBelongsToUser } from "../ownership";
 
+const paymentMethodSchema = z.enum([
+  "CASH",
+  "DEBIT_CARD",
+  "CREDIT_CARD",
+  "BANK_TRANSFER",
+  "EWALLET",
+  "QRIS",
+  "OTHER",
+]);
+
+const expenseDetailsSchema = z.object({
+  merchant: z.string().trim().max(100).optional(),
+  paymentMethod: paymentMethodSchema.optional(),
+  location: z.string().trim().max(120).optional(),
+});
+
 export const transactionRouter = router({
   /**
    * Create a new transaction (income or expense)
@@ -14,7 +30,7 @@ export const transactionRouter = router({
         type: z.enum(["INCOME", "EXPENSE"]),
         note: z.string().optional(),
         date: z.string().optional(),
-      })
+      }).merge(expenseDetailsSchema)
     )
     .mutation(async ({ ctx, input }) => {
       await assertCategoryBelongsToUser(ctx.db, input.categoryId, ctx.userId, input.type);
@@ -26,6 +42,9 @@ export const transactionRouter = router({
           amount: input.amount,
           type: input.type,
           note: input.note,
+          merchant: input.merchant,
+          paymentMethod: input.paymentMethod,
+          location: input.location,
           date: input.date ? new Date(input.date) : new Date(),
         },
         include: {
@@ -118,7 +137,7 @@ export const transactionRouter = router({
         type: z.enum(["INCOME", "EXPENSE"]).optional(),
         note: z.string().optional(),
         date: z.string().optional(),
-      })
+      }).merge(expenseDetailsSchema.partial())
     )
     .mutation(async ({ ctx, input }) => {
       // Verify ownership
@@ -144,6 +163,9 @@ export const transactionRouter = router({
           ...(input.amount && { amount: input.amount }),
           ...(input.type && { type: input.type }),
           ...(input.note !== undefined && { note: input.note }),
+          ...(input.merchant !== undefined && { merchant: input.merchant }),
+          ...(input.paymentMethod !== undefined && { paymentMethod: input.paymentMethod }),
+          ...(input.location !== undefined && { location: input.location }),
           ...(input.date && { date: new Date(input.date) }),
         },
         include: {

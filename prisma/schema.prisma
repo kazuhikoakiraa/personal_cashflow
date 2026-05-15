@@ -58,6 +58,9 @@ model Transaction {
   amount    Decimal  @db.Decimal(12, 2)
   type      TransactionType
   note      String?
+  merchant  String?
+  paymentMethod PaymentMethod?
+  location  String?
   date      DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -74,6 +77,16 @@ model Transaction {
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT_CARD
+  CREDIT_CARD
+  BANK_TRANSFER
+  EWALLET
+  QRIS
+  OTHER
 }
 
 model Budget {

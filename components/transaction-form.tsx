@@ -9,12 +9,26 @@ import { trpc } from "@/lib/trpc";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+const paymentMethods = [
+  { value: "", label: "Select payment method" },
+  { value: "CASH", label: "Cash" },
+  { value: "DEBIT_CARD", label: "Debit Card" },
+  { value: "CREDIT_CARD", label: "Credit Card" },
+  { value: "BANK_TRANSFER", label: "Bank Transfer" },
+  { value: "EWALLET", label: "E-Wallet" },
+  { value: "QRIS", label: "QRIS" },
+  { value: "OTHER", label: "Other" },
+] as const;
+
 const transactionSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid amount format"),
   type: z.enum(["INCOME", "EXPENSE"]),
   date: z.string().optional(),
   note: z.string().max(500, "Note must be 500 characters or less").optional(),
+  merchant: z.string().max(100, "Merchant must be 100 characters or less").optional(),
+  paymentMethod: z.enum(["CASH", "DEBIT_CARD", "CREDIT_CARD", "BANK_TRANSFER", "EWALLET", "QRIS", "OTHER"]).optional(),
+  location: z.string().max(120, "Location must be 120 characters or less").optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -29,6 +43,7 @@ export function TransactionForm() {
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -42,6 +57,14 @@ export function TransactionForm() {
     type: selectedType,
   });
 
+  useEffect(() => {
+    if (selectedType === "INCOME") {
+      setValue("merchant", undefined);
+      setValue("paymentMethod", undefined);
+      setValue("location", undefined);
+    }
+  }, [selectedType, setValue]);
+
   const inputClass =
     "w-full rounded-2xl border border-white/70 bg-white/60 backdrop-blur py-3 px-4 outline-none transition focus:border-white focus:ring-4 focus:ring-white/20 focus:bg-white/80";
   const selectClass =
@@ -51,6 +74,14 @@ export function TransactionForm() {
   const btnGhostClass =
     "px-6 py-3 border border-white/70 bg-white/40 hover:bg-white/60 text-gray-900 rounded-2xl font-semibold transition-colors backdrop-blur";
   const errorClass = "text-red-600 text-sm mt-1";
+  const optionalInputRegister = (field: "note" | "merchant" | "location") => ({
+    ...register(field, {
+      setValueAs: (value: string) => {
+        const trimmed = value?.trim();
+        return trimmed ? trimmed : undefined;
+      },
+    }),
+  });
 
   // Create transaction mutation
   const createMutation = trpc.transaction.create.useMutation({
@@ -161,12 +192,69 @@ export function TransactionForm() {
             {errors.date && <p className={errorClass}>{errors.date.message}</p>}
           </div>
 
+          {selectedType === "EXPENSE" && (
+            <div className="rounded-3xl border border-white/70 bg-white/45 p-5 shadow-sm backdrop-blur-sm space-y-5">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Expense details</h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Add merchant, payment method, and location for a more useful expense record.
+                </p>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Merchant / Store</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Starbucks, Tokopedia, MRT"
+                    {...optionalInputRegister("merchant")}
+                    className={inputClass}
+                  />
+                  {errors.merchant && <p className={errorClass}>{errors.merchant.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Payment Method</label>
+                  <select
+                    {...register("paymentMethod", {
+                      setValueAs: (value) => (value === "" ? undefined : value),
+                    })}
+                    className={selectClass}
+                  >
+                    {paymentMethods.map((method) => (
+                      <option key={method.value || "EMPTY"} value={method.value}>
+                        {method.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.paymentMethod && <p className={errorClass}>{errors.paymentMethod.message}</p>}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Location</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Jakarta Selatan, Online, Office"
+                    {...optionalInputRegister("location")}
+                    className={inputClass}
+                  />
+                  {errors.location && <p className={errorClass}>{errors.location.message}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Note */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Note (optional)
             </label>
-            <textarea placeholder="Add notes for this transaction..." {...register("note")} rows={4} className={inputClass} />
+            <textarea
+              placeholder="Add notes for this transaction..."
+              {...optionalInputRegister("note")}
+              rows={4}
+              className={inputClass}
+            />
             {errors.note && <p className={errorClass}>{errors.note.message}</p>}
           </div>
 

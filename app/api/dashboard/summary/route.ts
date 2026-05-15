@@ -10,6 +10,9 @@ type DashboardTransaction = {
   type: "INCOME" | "EXPENSE";
   date: string;
   note?: string;
+  merchant?: string;
+  paymentMethod?: string;
+  location?: string;
 };
 
 const chartColors = ["#3B82F6", "#10B981", "#F59E0B", "#EC4899", "#8B5CF6", "#06B6D4"];
@@ -106,6 +109,9 @@ export async function GET() {
       type: transaction.type,
       date: formatDate(transaction.date),
       note: transaction.note ?? undefined,
+      merchant: transaction.merchant ?? undefined,
+      paymentMethod: transaction.paymentMethod ?? undefined,
+      location: transaction.location ?? undefined,
     }));
 
     const spendingTrends = Array.from({ length: 7 }, (_, index) => {
